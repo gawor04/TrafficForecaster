@@ -1,0 +1,61 @@
+.main_container {
+	width: 1400px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.logo {
+	background-color: white;
+	color: grey;
+	text-align: center;
+	height: auto;
+	padding: 15px;
+}
+
+.day_forecast_title {
+	background-color: white;
+	color: black;
+	text-align: center;
+	padding: 15px;
+	font-size: 20px;
+	font-weight: bold;
+	float: up;
+}
+
+.gagues_container {
+	width: 100%;
+	height: 250px;
+	float: up;
+}
+
+.row {
+	width: 50%;
+	height: auto;
+	float: left;
+	align-content: center;
+}
+
+.select_chart_prop_container {
+	width: 100%;
+	height: 70px;
+	float: up;
+}
+
+#select_inten_type {
+	width: 180px;
+	height: auto;
+	float: left;
+	text-align: center;
+	padding-left: 200px;
+}
+
+#select_ind_variable {
+	width: 190px;
+	height: auto;
+	float: left;
+	text-align: center;
+}
+
+#intensity_chart {
+	float: up;
+}

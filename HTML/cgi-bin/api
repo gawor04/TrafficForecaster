@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+
+import os
+import re
+from requests.models import Response
+from get_archive import get_archive
+from get_json import get_json
+from get_csv import get_csv
+from get_yday import get_yday
+	
+def callback(path):
+	print("I'm callback!\r\n")
+	
+api = { "get_archive" : get_archive,
+		"get_json" : get_json,
+		"get_csv" : get_csv,
+		"get_yday" :get_yday,
+		"callback" : callback,
+}
+
+#print('Set-Cookie: fileDownload=true; path=/\r\nContent-type: text/csv\r\nContent-Disposition: attachment; filename=\"archive.csv\"\r\n')
+#print(file.read())
+
+#print("Content-type: text/html\n\n")
+#print("Hello CGI\n")
+#get_json('dd')
+
+
+if 'PATH_INFO' in os.environ.keys():
+	path_info = str(os.environ['PATH_INFO'])
+	path_splitted = path_info.split(os.sep)
+	
+#	file.write(path_splitted)
+#	file.close()
+#	get_json('dd')
+	if(len(path_splitted) >= 2):
+		api[path_splitted[1]](path_splitted)
+
+#api['get_json'](['get_json'])
