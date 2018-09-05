@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 from ResponseDispatcher import ResponseDispatcher
-from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 import os
 from TFTask.TFTaskScheduler import TFTaskScheduler
 from TFCarsGetter.TFCarsGetter import TFCarsGetter
@@ -32,7 +32,7 @@ ut = TFUpdateTask('./database/')
 cgt = TFCarsGetter('./database/' , 'ten_minutes')
 
 
-sched = BlockingScheduler()
+sched = BackgroundScheduler()
 sched.add_job(daily_job, trigger='cron', hour='3', minute='1')
 sched.add_job(ten_min_job, trigger='interval', minutes=10)
 
@@ -40,6 +40,7 @@ ac = TFArchiveCreator('./database/' + 'Archive.csv')
 TFInitializer.Init(ac, './database/')
 
 sched.start()
+print("System started")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80, debug=True)
