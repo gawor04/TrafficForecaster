@@ -1,0 +1,293 @@
+<!DOCTYPE HTML>
+<html lang="pl">
+	
+	<head>
+		
+		<meta charset="utf-8" />
+		<title>Intensywność ruchu w Krakowie</title>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+		
+		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+		<script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.71/jquery.csv-0.71.min.js"></script>
+		<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+		<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+		<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+		
+		<link rel="stylesheet" type="text/css" href= "{{ url_for('static',filename='css/style.css') }}">
+		<link rel="icon" href="icon/favicon.ico">
+		<script type="text/javascript">
+			
+			$(function() {
+				$('input[name="daterange"]').daterangepicker({
+					opens: 'center',
+					drops: 'up'
+				}, function(start, end, label) {
+				
+					archiveUrl = '/cgi-bin/api/get_archive' + start.format('/YYYY/MM/DD') + end.format('/YYYY/MM/DD');
+					
+					$.ajax({
+						type: "GET",
+						headers: {
+							Accept : "text/csv"
+						},
+						url: archiveUrl,
+						success: function (data) {
+						
+							var blob = new Blob([data]);
+							var link = document.createElement('a');
+							link.href = window.URL.createObjectURL(blob);
+							link.download = "archive.csv";
+							link.dispatchEvent(new MouseEvent(`click`, {bubbles: true, cancelable: true, view: window}));
+						}
+					});
+					
+				});
+			});
+			
+			google.charts.load('current', {'packages':['gauge', 'corechart']});
+			google.charts.setOnLoadCallback(getIntensityValues);
+			google.charts.setOnLoadCallback(showChart);
+			google.charts.setOnLoadCallback(LoadTable);
+			
+			function CapacityChart() {
+				$.ajax({
+					type: "GET",
+					headers: {
+						Accept : "text/csv"
+					},
+					url: "/cgi-bin/get_archive",
+					success: function (data) {
+						
+						var blob = new Blob([data]);
+						var link = document.createElement('a');
+						link.href = window.URL.createObjectURL(blob);
+						link.download = "archive.csv";
+						link.dispatchEvent(new MouseEvent(`click`, {bubbles: true, cancelable: true, view: window}));
+					}
+				});
+			}
+			
+			function LoadTable() {
+				
+				$.get('/cgi-bin/api/get_yday/table.json', function(jd) {
+					
+					table = JSON.parse(jd);
+					document.getElementById("forecasted_cars").innerHTML = (table.forecasted_cars).toString();
+					document.getElementById("forecasted_bikes").innerHTML = (table.forecasted_bikes).toString();
+					document.getElementById("real_cars").innerHTML = (table.real_cars).toString();
+					document.getElementById("real_bikes").innerHTML = (table.real_bikes).toString();
+				});	
+			}
+
+            function OnSelectionChangeIntenSelect(select) {
+				var inten_val = select.options[select.selectedIndex].value;
+				var ind_val   = getSelectIndValue();
+				
+				getSelectedChart(inten_val, ind_val);
+			}
+			
+			function OnSelectionChangeVarSelect(select) {
+				var ind_val   = select.options[select.selectedIndex].value;
+				var inten_val = getSelectIntenTypeValue();
+				
+				getSelectedChart(inten_val, ind_val);
+			}
+			
+			function getSelectIntenTypeValue(){
+				var selector_inten = document.getElementById('sel_inten_type');
+				
+				return(selector_inten[selector_inten.selectedIndex].value);
+			}
+			
+			function getSelectIndValue(){
+				var selector_inten = document.getElementById('sel_ind_variable');
+				
+				return(selector_inten[selector_inten.selectedIndex].value);
+			}
+			
+			function getSelectedChart(inten_val, ind_val){
+				
+				showChart(inten_val, ind_val);
+			}
+      
+			function getIntensityValues(){
+		  
+				$.getJSON('/cgi-bin/api/get_json/forecast.json', function(jd) {
+					
+					drawChart(jd);
+				});			
+			}
+
+			function drawChart(intensities_json) {
+				
+				intensities = JSON.parse(intensities_json)
+				
+				var t_data_bikes = google.visualization.arrayToDataTable([
+					['Label', 'Value'],
+					['rowery', (parseInt(intensities.bikes_tomorrow)-380)/22000 * 100]
+				]);
+				
+				var t_data_cars = google.visualization.arrayToDataTable([
+					['Label', 'Value'],
+					['samochody', (parseInt(intensities.cars_tomorrow)-2000)/55307 * 100]
+				]);
+				
+				var da_t_data_bikes = google.visualization.arrayToDataTable([
+					['Label', 'Value'],
+					['rowery', (parseInt(intensities.bikes_day_after_tomorrow)-380)/22000 * 100]
+				]);
+				
+				var da_t_data_cars = google.visualization.arrayToDataTable([
+					['Label', 'Value'],
+					['samochody', (parseInt(intensities.cars_day_after_tomorrow)-2000)/55307 * 100]
+				]);
+				
+				var options = {
+					width: 800, height: 220,
+					redFrom: 90, redTo: 100,
+					yellowFrom:75, yellowTo: 90,
+					minorTicks: 5
+				};
+
+				var chart_bikes_today = new google.visualization.Gauge(document.getElementById('gague_bikes_today'));
+				var chart_cars_today = new google.visualization.Gauge(document.getElementById('gague_cars_today'));
+				var chart_bikes_tomorrow = new google.visualization.Gauge(document.getElementById('gague_bikes_tomorrow'));
+				var chart_cars_tomorrow = new google.visualization.Gauge(document.getElementById('gague_cars_tomorrow'));
+
+				chart_bikes_today.draw(t_data_bikes, options);
+				chart_cars_today.draw(t_data_cars, options);
+				
+				chart_bikes_tomorrow.draw(da_t_data_bikes, options);
+				chart_cars_tomorrow.draw(da_t_data_cars, options);
+			}
+			
+			function showChart(inten_val='cars', ind_val='precip'){
+				
+				
+				var file_name = '/cgi-bin/api/get_csv/' + inten_val + '_' + ind_val + '.csv';
+				var file_name2 = 'CarsPrecip.csv';
+				$.get(file_name, function(csvString) {
+					
+					var arrayData = $.csv.toArrays(csvString, {onParseValue: $.csv.hooks.castToScalar});
+					var data = new google.visualization.arrayToDataTable(arrayData);
+					
+					var options = {
+						width: 1400, height: 600,
+						legend: 'none'
+					};
+					
+					var chart = new google.visualization.ScatterChart(document.getElementById('intensity_chart'));
+					chart.draw(data, options);
+				});
+			}
+			
+		</script>
+		
+	</head>
+	
+	<body>
+		
+		<div class="main_container">
+			
+			<div class="logo">
+				<h1>Intensywność ruchu w Krakowie</h1>
+			</div>
+		
+			<div class="day_forecast_title">
+				<p>Przewidywana intensywność ruchu dzisiaj</p>
+			</div>
+		
+			<div class="gagues_container">
+			
+				<div class="row">
+					<div id="gague_bikes_today" align="center"></div>
+				</div>
+			
+				<div class="row">
+					<div id="gague_cars_today" align="center"></div>
+				</div>
+			
+			</div>
+			
+			<div class="day_forecast_title">
+				<p>Przewidywana intensywność ruchu jutro</p>
+			</div>
+			
+			<div class="gagues_container">
+			
+				<div class="row">
+					<div id="gague_bikes_tomorrow" align="center"></div>
+				</div>
+			
+				<div class="row">
+					<div id="gague_cars_tomorrow" align="center"></div>
+				</div>
+			
+			</div>
+			
+			<div class="day_forecast_title">
+				<p>Intensywność przewidywana wczoraj</p>
+			</div>
+			
+			<table style="width:50%" align="center">
+				<tr>
+					<th></th>
+					<th align = "left">przewidywana</th>
+					<th align = "left">zmierzona</th> 
+				</tr>
+				<tr>
+					<td>Samochody</td>
+					<td id = 'forecasted_cars'></td>
+					<td id = 'real_cars'></td>
+				</tr>
+				<tr>
+					<td>Rowery</td>
+					<td id = 'forecasted_bikes'></td>
+					<td id = 'real_bikes'></td>
+				</tr>
+			</table>
+			
+			<div class="day_forecast_title">
+				<p>Dane archiwalne</p>
+			</div>
+			
+			<div class="select_chart_prop_container">
+			
+				<div id="select_inten_type">
+					
+					<p>Rodzaj intensywności</p>
+					
+					<select id="sel_inten_type" onchange="OnSelectionChangeIntenSelect(this)">
+						<option value="bikes">Rowery</option>
+						<option value="cars">Samochody</option>
+					</select>
+					
+				</div>
+				
+				<div id="select_ind_variable">
+					
+					<p>Rodzaj zależności</p>
+					
+					<select id="sel_ind_variable" onchange="OnSelectionChangeVarSelect(this)">
+						<option value="temp">Temperatura</option>
+						<option value="precip">Opad</option>
+					</select>
+					
+				</div>
+			
+			</div>
+			
+			<div id="intensity_chart"> </div>
+			
+			<div class="day_forecast_title">
+				<p>Pobierz dane archiwalne</p>
+			</div>
+			
+			<input type="text" align="center" name="daterange" value="01/01/2018 - 01/15/2018"/>
+			
+		</div>
+		
+	</body>
+	
+</html>
