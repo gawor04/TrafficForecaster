@@ -4,7 +4,7 @@ To run:
 1. clone project
 2. build the image: 
 ```
-    $ docker build -t tforecaster .
+    $ sudo docker build -t tforecaster .
 ```
 3. run project: 
 ```
