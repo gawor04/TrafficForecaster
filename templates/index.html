@@ -21,7 +21,8 @@
 			$(function() {
 				$('input[name="daterange"]').daterangepicker({
 					opens: 'center',
-					drops: 'up'
+					drops: 'up',
+					minDate: '2018/01/01'
 				}, function(start, end, label) {
 				
 					archiveUrl = '/cgi-bin/api/get_archive' + start.format('/YYYY/MM/DD') + end.format('/YYYY/MM/DD');
@@ -162,20 +163,37 @@
 				chart_cars_tomorrow.draw(da_t_data_cars, options);
 			}
 			
-			function showChart(inten_val='cars', ind_val='precip'){
+			function showChart(inten_val='bikes', ind_val='temp'){
 				
 				
 				var file_name = '/cgi-bin/api/get_csv/' + inten_val + '_' + ind_val + '.csv';
 				var file_name2 = 'CarsPrecip.csv';
 				$.get(file_name, function(csvString) {
-					
+	
+
 					var arrayData = $.csv.toArrays(csvString, {onParseValue: $.csv.hooks.castToScalar});
 					var data = new google.visualization.arrayToDataTable(arrayData);
-					
+
+					if(arrayData[0][0] == 'cars'){
+						hTitle = 'Sumaryczna ilość samochodów';
+					}
+					else {
+						hTitle = 'Sumaryczna ilość rowerów';
+					}
+
+					if(arrayData[0][1] == 'precip'){
+						vTitle = 'Sumaryczny opad dzienny (mm)';
+					}
+					else {
+						vTitle = 'Średnia dobowa temperatura (°C)';
+					}
+
 					var options = {
-						width: 1400, height: 600,
-						legend: 'none'
+						width: 1400, height: 600, legend: 'none', 
+						hAxis: {title: hTitle}, vAxis: {title: vTitle}
 					};
+
+	
 					
 					var chart = new google.visualization.ScatterChart(document.getElementById('intensity_chart'));
 					chart.draw(data, options);
