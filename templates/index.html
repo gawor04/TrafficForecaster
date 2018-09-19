@@ -40,7 +40,10 @@
 							link.href = window.URL.createObjectURL(blob);
 							link.download = "archive.csv";
 							link.dispatchEvent(new MouseEvent(`click`, {bubbles: true, cancelable: true, view: window}));
-						}
+						},
+  						error: function(){
+    							alert('Brak wybranego zakresu w bazie');
+  						}
 					});
 					
 				});
@@ -65,7 +68,10 @@
 						link.href = window.URL.createObjectURL(blob);
 						link.download = "archive.csv";
 						link.dispatchEvent(new MouseEvent(`click`, {bubbles: true, cancelable: true, view: window}));
-					}
+					},
+  					error: function(){
+    						alert('Brak wybranego zakresu w bazie');
+  					}
 				});
 			}
 			
